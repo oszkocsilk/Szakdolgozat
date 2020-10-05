@@ -14,7 +14,7 @@ public class Controller {
 
         private int current[] = {0,0};
         int x = 0, y = 0;
-        int numberOfCells=10;
+        int numberOfCells=5;
         int cellSize=800/numberOfCells;
         boolean finished=false;
 
@@ -40,7 +40,7 @@ public class Controller {
                     cell[i][j] = new Cell();
                 }
             }   //cellák létrehozása
-            
+
 
             int useThisOperator = -10;
             for (int q=0; q < numberOfCells; q++) {
@@ -71,7 +71,7 @@ public class Controller {
 
 
                         } else {
-                        UseOperator(cell, useThisOperator);
+                            UseOperator(cell, useThisOperator);
                         }
 
 
@@ -79,6 +79,10 @@ public class Controller {
                     }
                 }
             }
+            randomWallBreak(numberOfCells,cell);
+
+
+            //kirajzolás
             for (int j=0; j < numberOfCells; j++) {
                 for (int i = 0; i < numberOfCells; i++) {
                     if (cell[i][j].walls[0] == 1) {
@@ -105,11 +109,17 @@ public class Controller {
 
                 }
             }
+
+
+            //megoldás menete
             if(finished==false) {
                 RandomOperatorTry(cell);
             }
         }
 
+
+
+        //falgeneráláshoz használt metódus: használható operátorok kigyűjtése
         int[] usable_operators_for_walls(Cell cell[][]) {
 
 
@@ -162,6 +172,7 @@ public class Controller {
 
             return usable;
         }
+        //falgeneráláshoz használt metódus: kiválasztja, hogy melyik operátort használjuk.
         int operator_choise_for_walls(Cell cell[][]) {
 
 
@@ -231,7 +242,7 @@ public class Controller {
 
 
 
-
+        //használjuk az operátort, midnen paramétert átálítunk ennek megfelelően(szülő, használt operátorok,stb)
         int[] UseOperator(Cell[][] cell, int useThisOperator) {
 
 
@@ -328,12 +339,12 @@ public class Controller {
 
 
 
-
+        //megoldás menete
         void RandomOperatorTry(Cell[][] cell){
             System.out.println("\n\n\n\n\n\n\n\n\nNow start the game!");
             x=0;
             y=0;
-            int counter=0;
+            int counter=1;
 
 
 
@@ -403,17 +414,30 @@ public class Controller {
 
 
 
-         int[] usable_operators(Cell cell[][]) {
+        int[] usable_operators(Cell cell[][]) {
 
 
             int[] usable = {1, 1, 1, 1};//up,right,down,left
 
-             for (int i=0; i<4;i++){
+            for (int i=0; i<4;i++){
 
-                 if (cell[x][y].usedOperators[i]==1){       //van-e már használt operátora, ha igen akkor kivesszük
-                     usable[i]=0;
-                 }
-             }
+                if (cell[x][y].usedOperators[i]==1){       //van-e már használt operátora, ha igen akkor kivesszük
+                    usable[i]=0;
+                }
+                if ((y > 0 && cell[x][y - 1].visited) == true){
+                    usable[0]=0;
+                }
+                if ( x < numberOfCells-1 && cell[x+1][y].visited==true){
+                    usable[1]=0;
+                }
+                if ( y < numberOfCells-1 && cell[x][y+1].visited==true){
+                    usable[2]=0;
+                }
+                if ( x > 0 && cell[x-1][y].visited==true){
+                    usable[3]=0;
+                }
+
+            }
 
 
             if (x < 1) {
@@ -471,11 +495,11 @@ public class Controller {
                 usable[2]=0;
             }
 
-             return usable;
+            return usable;
         }
 
 
-         int operator_choise(Cell cell[][]) {
+        int operator_choise(Cell cell[][]) {
 
 
 
@@ -511,8 +535,7 @@ public class Controller {
                 Random rand = new Random();
                 int randInt = rand.nextInt(operator);
 
-                //System.out.println(randInt);
-                //System.out.println(placeCounter);
+
 
                 if (operator == 4) {                                     //ha mind a 4 operátor alkalmazható, nincs szükség a hely számolásra
                     return randInt;
@@ -535,12 +558,48 @@ public class Controller {
                     }
                 }
             }
-                return placeCounter;
-         }
+            return placeCounter;
+        }
+        //itt választom ki, hogy melyik felakat döntöm le az új útvonalak miatt
+        void randomWallBreak(int num, Cell[][] cell){
+            num=num-2;
+            int wallX;
+            int wallY;
+            for(int i=0; i<num/2; i++){
+                wallX=(int)(Math.random()*num)+1;
+                wallY=(int)(Math.random()*num)+1;
 
+                cell[wallX][wallY].walls[0] = 0;
+                cell[wallX][wallY].usableOperators[0] = 1;
+                cell[wallX][wallY-1].walls[2]=0;
+                cell[wallX][wallY-1].usableOperators[2] = 1;
+
+
+                cell[wallX][wallY].walls[1] = 0;
+                cell[wallX][wallY].usableOperators[1] = 1;
+                cell[wallX+1][wallY].walls[3]=0;
+                cell[wallX+1][wallY].usableOperators[3] = 1;
+
+
+                cell[wallX][wallY].walls[2] = 0;
+                cell[wallX][wallY].usableOperators[2] = 1;
+                cell[wallX][wallY+1].walls[0]=0;
+                cell[wallX][wallY+1].usableOperators[0] = 1;
+
+
+                cell[wallX][wallY].walls[3] = 0;
+                cell[wallX][wallY].usableOperators[3] = 1;
+                cell[wallX-1][wallY].walls[1]=0;
+                cell[wallX-1][wallY].usableOperators[1] = 1;
+
+
+
+                System.out.println("X értéke: "+wallX+"Y értéke: "+wallY);
+
+            }
+        }
 
     }
 }
-
 
 
