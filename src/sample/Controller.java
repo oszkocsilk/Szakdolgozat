@@ -14,7 +14,7 @@ public class Controller {
 
         private int current[] = {0,0};
         int x = 0, y = 0;
-        int numberOfCells=5;
+        int numberOfCells=10;
         int cellSize=800/numberOfCells;
         boolean finished=false;
 
@@ -111,9 +111,11 @@ public class Controller {
             }
 
 
-            //megoldás menete
+            //megoldás menete back trackkel
             if(finished==false) {
-                RandomOperatorTry(cell);
+                //RandomOperatorTry(cell);
+                heuristicBackTrack(cell);
+
             }
         }
 
@@ -339,7 +341,7 @@ public class Controller {
 
 
 
-        //megoldás menete
+        //megoldás menete back trackkel
         void RandomOperatorTry(Cell[][] cell){
             System.out.println("\n\n\n\n\n\n\n\n\nNow start the game!");
             x=0;
@@ -408,6 +410,74 @@ public class Controller {
         }
 
 
+        //megoldás Heurisztika és visszalépés használatával
+        void heuristicBackTrack(Cell[][] cell){
+            System.out.println("\n\n\n\n\n\n\n\n\nNow start the game!");
+            x=0;
+            y=0;
+            int counter=1;
+
+
+
+
+
+
+            for(int i=0; i<numberOfCells;i++){
+                for(int j=0; j<numberOfCells;j++){
+                    for (int k=0; k<4;k++) {
+                        cell[i][j].usedOperators[k] = 0;
+                    }
+                    cell[i][j].visited=false;
+                    cell[i][j].hasParent=false;
+                }
+
+            }
+            cell[0][0].visited=true;
+            cell[0][0].parent[0]=-1;
+            cell[0][0].parent[1]=-1;
+
+
+            while(finished!=true){
+
+                cell[x][y].usableOperators = usable_operators(cell);
+
+                int useThisOperator = operator_choise_for_heuristic(cell);
+                if (useThisOperator == -1) {
+
+
+                    if (cell[x][y].hasParent == true) {
+                        System.out.println("visszalépés");
+
+                        int xhelp = cell[x][y].parent[0];
+                        int yhelp = cell[x][y].parent[1];
+
+                        current[0] = xhelp;
+                        current[1] = yhelp;
+
+                        x = xhelp;
+                        y = yhelp;
+
+
+                    }
+
+
+                } else {
+                    UseOperator(cell, useThisOperator);
+                    System.out.println("\nx:"+x+" y:"+y);
+//                    for(int k=0; k<4;k++)
+//                        System.out.println(" lehetőségek:"+cell[x][y].usableOperators[k]+" Falak:"+cell[x][y].walls[k]+" használt operátorok:"+cell[x][y].usedOperators[k]);
+
+
+                }
+                System.out.println("lépés:"+counter);
+                counter++;
+                System.out.println("heurisztika: "+heuristica(x,y));
+                if(x==numberOfCells-1 && y==numberOfCells-1)
+                    finished=true;
+            }
+
+
+        }
 
 
 
@@ -497,6 +567,70 @@ public class Controller {
 
             return usable;
         }
+
+        int operator_choise_for_heuristic(Cell cell[][]) {
+
+
+            int operator = 0;
+            int placeCounter = -1;
+            for (int i = 0; i < 4; i++) {                            //megszámoljuk a haszálható operátorokat
+
+                if (cell[x][y].usableOperators[i] == 1) {
+                    operator++;
+
+
+                }
+            }
+
+            if (operator == 0) {                                    //ha nincs használható operátor,akkor visszalép
+                System.out.println("nincs használható operátor");
+                return -1;
+            } else if (operator == 1) {                                     //ha csak 1 operátor alkalmazható, azt alkalmazzuk
+                for (int i = 0; i < numberOfCells - 1; i++) {
+                    if (cell[x][y].usableOperators[i] == 1) {
+                        return placeCounter + 1;
+                    }
+                    placeCounter++;
+
+                }
+            } else {
+                //heurisztika kiértékelése!
+                Random rand = new Random();
+
+                //jobra vagy le fog menni a jobb alsó sarokban lévő cél miatt
+                if (cell[x][y].usableOperators[1] == 1 && cell[x][y].usableOperators[2] == 1) {
+                    if(heuristica(x+1,y)<heuristica(x,y+1)){
+                        return 1;
+                    }
+                    else if(heuristica(x+1,y)>heuristica(x,y+1)){
+                        return 2;
+                    }
+                    else{
+                    int randInt = rand.nextInt(2) + 1;
+                    return randInt;
+                    }
+                } else if (cell[x][y].usableOperators[1] == 1) {
+                    return 1;
+                } else if (cell[x][y].usableOperators[2] == 1) {
+                    return 2;
+                } else {
+                    int randInt = rand.nextInt(2);
+                    if (randInt == 0) {
+                        return 0;
+                    } else {
+                        return 3;
+                    }
+                }
+
+
+            }
+            return 1;
+        }
+
+
+
+
+
 
 
         int operator_choise(Cell cell[][]) {
@@ -599,6 +733,9 @@ public class Controller {
             }
         }
 
+        int heuristica(int x, int y){
+            return ( (numberOfCells-1) + (numberOfCells-1) ) - ( x + y);
+        }
     }
 }
 
