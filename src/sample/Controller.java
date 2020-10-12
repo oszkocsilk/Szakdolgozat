@@ -1,9 +1,12 @@
 package sample;
 
+import com.sun.xml.internal.bind.v2.runtime.output.StAXExStreamWriterOutput;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.Line2D;
 import java.awt.geom.Rectangle2D;
+import java.util.ArrayList;
 import java.util.Random;
 
 public class Controller {
@@ -111,15 +114,17 @@ public class Controller {
             }
 
 
-            //megoldás menete back trackkel
+            //megoldás
             if(finished==false) {
                 //RandomOperatorTry(cell);
-                heuristicBackTrack(cell);
+                //heuristicBackTrack(cell);
+
+
+               breadthSearch(cell);
+
 
             }
         }
-
-
 
         //falgeneráláshoz használt metódus: használható operátorok kigyűjtése
         int[] usable_operators_for_walls(Cell cell[][]) {
@@ -235,15 +240,6 @@ public class Controller {
             return placeCounter;
         }
 
-
-
-
-
-
-
-
-
-
         //használjuk az operátort, midnen paramétert átálítunk ennek megfelelően(szülő, használt operátorok,stb)
         int[] UseOperator(Cell[][] cell, int useThisOperator) {
 
@@ -331,16 +327,6 @@ public class Controller {
             return current;
         }
 
-
-
-
-
-
-
-
-
-
-
         //megoldás menete back trackkel
         void RandomOperatorTry(Cell[][] cell){
             System.out.println("\n\n\n\n\n\n\n\n\nNow start the game!");
@@ -408,7 +394,6 @@ public class Controller {
 
 
         }
-
 
         //megoldás Heurisztika és visszalépés használatával
         void heuristicBackTrack(Cell[][] cell){
@@ -479,11 +464,6 @@ public class Controller {
 
         }
 
-
-
-
-
-
         int[] usable_operators(Cell cell[][]) {
 
 
@@ -504,6 +484,18 @@ public class Controller {
                     usable[2]=0;
                 }
                 if ( x > 0 && cell[x-1][y].visited==true){
+                    usable[3]=0;
+                }
+                if (y > 0 && cell[x][y - 1].usedOperators[2] == 1){
+                    usable[0]=0;
+                }
+                if ( x < numberOfCells-1 && cell[x+1][y].usedOperators[3] == 1){
+                    usable[1]=0;
+                }
+                if ( y < numberOfCells-1 && cell[x][y+1].usedOperators[0] == 1){
+                    usable[2]=0;
+                }
+                if ( x > 0 && cell[x-1][y].usedOperators[1] == 1){
                     usable[3]=0;
                 }
 
@@ -627,6 +619,192 @@ public class Controller {
             return 1;
         }
 
+        void breadthSearch(Cell[][] cell){
+
+            System.out.println("\n\n\n\n\n\n\n\n\nNow start the game!");
+            x=0;
+            y=0;
+            int counter=1;
+
+            for(int i=0; i<numberOfCells;i++){
+                for(int j=0; j<numberOfCells;j++){
+                    for (int k=0; k<4;k++) {
+                        cell[i][j].usedOperators[k] = 0;
+                    }
+                    cell[i][j].visited=false;
+                    cell[i][j].hasParent=false;
+                }
+
+            }
+            cell[0][0].visited=true;
+            cell[0][0].parent[0]=-1;
+            cell[0][0].parent[1]=-1;
+
+            ArrayList<int[]> array = new ArrayList<>();
+
+            int[] place={0,0};
+            array.add(place);
+            int i=0;
+
+
+
+
+            while (finished!=true){
+                place = array.get(i);
+
+                if(place[0]==numberOfCells-1 && place[1]==numberOfCells-1){
+                    System.out.println("Sikeresen megtaláltam a megoldást!");
+                    finished=true;
+                    break;
+
+                }
+                cell[x][y].visited=true;
+                System.out.println("Jelenleg itt vagyunk: "+ place[0] +", "+place[1] );
+
+                x=place[0];
+                y=place[1];
+                cell[x][y].usableOperators = usable_operators(cell);
+                System.out.println("Használható operátorok: ");
+                for (int j = 0; j<4 ; j++)
+                    System.out.println(cell[x][y].usableOperators[j]);
+
+
+
+
+                if(cell[x][y].usableOperators[0]==1 && cell[x][y-1].visited==false ){  //fel
+
+                    //System.out.println("fel");
+
+                    cell[place[0]][place[1]].usedOperators[0]=1;
+                    int[] temp= new int[2];
+
+                    place[1]--;
+                    temp[0]=place[0];
+                    temp[1]=place[1];
+                    if (!array.contains(temp)) {
+                        array.add(temp);
+
+                        cell[place[0]][place[1]].visited = true;
+                        cell[place[0]][place[1]].hasParent = true;
+                        cell[place[0]][place[1]].parent[0] = place[0];
+                        cell[place[0]][place[1]].parent[1] = place[1] + 1;
+                        cell[place[0]][place[1]].usableOperators[2] = 0;
+                    }
+                    place[1]++;
+
+
+                }
+                if(cell[x][y].usableOperators[1]==1 && cell[x+1][y].visited==false){  //jobbra
+
+                   // System.out.println("jobb");
+
+                    cell[x][y].usedOperators[1]=1;
+
+                    int[] temp= new int[2];
+                    place[0]++;
+                    temp[0] =place[0];
+                    temp[1]= place[1];
+                    if (!array.contains(temp)) {
+
+                        array.add(temp);
+
+                        cell[place[0]][place[1]].hasParent = true;
+                        cell[place[0]][place[1]].parent[0] = place[0] - 1;
+                        cell[place[0]][place[1]].parent[1] = place[1];
+                        cell[place[0]][place[1]].visited = true;
+                        cell[place[0]][place[1]].usableOperators[3] = 0;
+                    }
+                    place[0]--;
+
+
+                }
+                if(cell[x][y].usableOperators[2]==1 && cell[x][y+1].visited==false){  //le
+
+                   // System.out.println("le");
+
+                    cell[place[0]][place[1]].usedOperators[2]=1;
+
+                    int[] temp= new int[2];
+                    place[1]++;
+                    temp[0]=place[0];
+                    temp[1]=place[1];
+                    if (!array.contains(temp)) {
+
+                        array.add(temp);
+
+                        cell[place[0]][place[1]].visited = true;
+                        cell[place[0]][place[1]].hasParent = true;
+                        cell[place[0]][place[1]].parent[0] = place[0];
+                        cell[place[0]][place[1]].parent[1] = place[1] - 1;
+                        cell[place[0]][place[1]].usableOperators[0] = 0;
+                    }
+
+                    place[1]--;
+
+
+                }
+                if(cell[x][y].usableOperators[3]==1 && cell[x-1][y].visited==false){  //bal
+
+                   // System.out.println("bal");
+
+                    cell[place[0]][place[1]].usedOperators[3]=1;
+
+                    int[] temp= new int[2];
+                    place[0]--;
+                    temp[0]=place[0];
+                    temp[1]=place[1];
+                    if (!array.contains(temp)) {
+
+                        array.add(temp);
+
+                        cell[place[0]][place[1]].hasParent = true;
+                        cell[place[0]][place[1]].parent[0] = place[0] + 1;
+                        cell[place[0]][place[1]].parent[1] = place[1];
+                        cell[place[0]][place[1]].visited = true;
+                        cell[place[0]][place[1]].usableOperators[1] = 0;
+
+                    }
+                    place[0]++;
+
+                }
+
+                i++;
+
+            }
+//            for (int j =0; j<numberOfCells; j++){
+//                for (int k =0; k<numberOfCells; k++){
+//                    System.out.println("x:"+j+" y:"+k+" szülője: "+cell[j][k].parent[0]+", "+cell[j][k].parent[1]);
+//                }
+//            }
+
+
+
+
+
+            // finished = true
+
+            x = array.get(i)[0]; //9
+            y = array.get(i)[1]; //9
+            ArrayList <int[]> answer = new ArrayList<>();
+
+
+
+
+            while(x!=0 || y!=0){
+
+                answer.add(cell[x][y].parent);
+                int x2=x;
+                int y2=y;
+                x=cell[x2][y2].parent[0];
+                y=cell[x2][y2].parent[1];
+
+            }
+
+            for (int[] ans : answer){
+                System.out.println(ans[0] +", "+ ans[1]);
+            }
+
+        }
 
 
 
