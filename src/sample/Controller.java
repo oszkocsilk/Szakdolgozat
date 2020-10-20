@@ -1,6 +1,6 @@
 package sample;
 
-import com.sun.xml.internal.bind.v2.runtime.output.StAXExStreamWriterOutput;
+//import com.sun.xml.internal.bind.v2.runtime.output.StAXExStreamWriterOutput;
 
 import javax.swing.*;
 import java.awt.*;
@@ -13,79 +13,42 @@ public class Controller {
 
 
 
+
     public static class DrawStuff extends JComponent {
 
         private int current[] = {0,0};
-        int x = 0, y = 0;
-        int numberOfCells=10;
-        int cellSize=800/numberOfCells;
-        boolean finished=false;
+        static int x = 0;
+        static int y = 0;
+        static int numberOfCells=10;
+        int cellSize=600/numberOfCells;
+        static boolean finished=false;
+        static Cell[][] cell = new Cell[numberOfCells][numberOfCells];
 
-
-
-
-
-
-        public void paint(Graphics g) {
-            Graphics2D graph2D = (Graphics2D) g;
-
-            graph2D.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
-            Shape drawRect = new Rectangle2D.Float(10, 10, 800, 800);
-            graph2D.draw(drawRect);
-
-
-
-            Cell[][] cell = new Cell[numberOfCells][numberOfCells];
-
+        void cellCreate(){
             for (int j=0; j < numberOfCells; j++) {
                 for (int i = 0; i < numberOfCells; i++) {
                     cell[i][j] = new Cell();
                 }
             }   //cellák létrehozása
 
+        }
+        void useBackTrackOperator(){
+            if (cell[x][y].hasParent==true) {
+                System.out.println("vissza");
+                int xhelp = cell[x][y].parent[0];
+                int yhelp = cell[x][y].parent[1];
 
-            int useThisOperator = -10;
-            for (int q=0; q < numberOfCells; q++) {
-                for (int w = 0; w < numberOfCells; w++) {
-                    while (cell[q][w].visited!=true) {
+                current[0]=xhelp;
+                current[1]=yhelp;
 
-                        cell[x][y].usableOperators = usable_operators_for_walls(cell);
-                        useThisOperator = operator_choise_for_walls(cell);
-
-
-
-                        if (useThisOperator == -1) {
-
-
-                            if (cell[x][y].hasParent==true) {
-                                System.out.println("vissza");
-                                int xhelp = cell[x][y].parent[0];
-                                int yhelp = cell[x][y].parent[1];
-
-                                current[0]=xhelp;
-                                current[1]=yhelp;
-
-                                x=xhelp;
-                                y=yhelp;
+                x=xhelp;
+                y=yhelp;
 
 
-                            }
-
-
-                        } else {
-                            UseOperator(cell, useThisOperator);
-                        }
-
-
-
-                    }
-                }
             }
-            randomWallBreak(numberOfCells,cell);
+        }
 
-
-            //kirajzolás
+        void drawOut(Graphics2D graph2D){
             for (int j=0; j < numberOfCells; j++) {
                 for (int i = 0; i < numberOfCells; i++) {
                     if (cell[i][j].walls[0] == 1) {
@@ -112,18 +75,60 @@ public class Controller {
 
                 }
             }
+        }
+
+
+
+        public void paint(Graphics g) {
+            Graphics2D graph2D = (Graphics2D) g;
+
+            graph2D.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+            Shape drawRect = new Rectangle2D.Float(10, 10, 600, 600);
+            graph2D.draw(drawRect);
+
+
+            cellCreate();
+
+            int useThisOperator = -10;
+            for (int q=0; q < numberOfCells; q++) {
+                for (int w = 0; w < numberOfCells; w++) {
+                    while (cell[q][w].visited!=true) {
+                        cell[x][y].usableOperators = usable_operators_for_walls(cell);
+                        useThisOperator = operator_choise_for_walls(cell);
+
+                        if (useThisOperator == -1) useBackTrackOperator();
+
+                        else UseOperator(cell, useThisOperator);
+                    }
+                }
+            }
+            randomWallBreak(numberOfCells,cell);
+
+
+            //kirajzolás
+            drawOut(graph2D);
 
 
             //megoldás
-            if(finished==false) {
-                //RandomOperatorTry(cell);
-                //heuristicBackTrack(cell);
+            solve();
+
+//            String s1= """
+//                    test
+//                    1
+//                    """;
+//            for (int i=0; i<10; i++){
+//                s1+="\n "+i ;
+//            }
+//            System.out.println(s1);
 
 
-               breadthSearch(cell);
+        }
 
-
-            }
+        public static void solve() {
+            //RandomOperatorTry(cell);
+            //heuristicBackTrack(cell);
+            breadthSearch(cell);
         }
 
         //falgeneráláshoz használt metódus: használható operátorok kigyűjtése
@@ -240,7 +245,7 @@ public class Controller {
             return placeCounter;
         }
 
-        //használjuk az operátort, midnen paramétert átálítunk ennek megfelelően(szülő, használt operátorok,stb)
+        //használjuk az operátort, minden paramétert átálítunk ennek megfelelően(szülő, használt operátorok,stb)
         int[] UseOperator(Cell[][] cell, int useThisOperator) {
 
 
@@ -464,7 +469,7 @@ public class Controller {
 
         }
 
-        int[] usable_operators(Cell cell[][]) {
+        static int[] usable_operators(Cell cell[][]) {
 
 
             int[] usable = {1, 1, 1, 1};//up,right,down,left
@@ -619,7 +624,7 @@ public class Controller {
             return 1;
         }
 
-        void breadthSearch(Cell[][] cell){
+        public static void breadthSearch(Cell[][] cell){
 
             System.out.println("\n\n\n\n\n\n\n\n\nNow start the game!");
             x=0;
@@ -673,7 +678,7 @@ public class Controller {
 
                 if(cell[x][y].usableOperators[0]==1 && cell[x][y-1].visited==false ){  //fel
 
-                    //System.out.println("fel");
+
 
                     cell[place[0]][place[1]].usedOperators[0]=1;
                     int[] temp= new int[2];
@@ -696,7 +701,7 @@ public class Controller {
                 }
                 if(cell[x][y].usableOperators[1]==1 && cell[x+1][y].visited==false){  //jobbra
 
-                   // System.out.println("jobb");
+
 
                     cell[x][y].usedOperators[1]=1;
 
@@ -720,7 +725,7 @@ public class Controller {
                 }
                 if(cell[x][y].usableOperators[2]==1 && cell[x][y+1].visited==false){  //le
 
-                   // System.out.println("le");
+
 
                     cell[place[0]][place[1]].usedOperators[2]=1;
 
@@ -745,7 +750,7 @@ public class Controller {
                 }
                 if(cell[x][y].usableOperators[3]==1 && cell[x-1][y].visited==false){  //bal
 
-                   // System.out.println("bal");
+
 
                     cell[place[0]][place[1]].usedOperators[3]=1;
 
