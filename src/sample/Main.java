@@ -10,10 +10,15 @@ public class Main extends JFrame {
 
 
     public Main() {
-        this.setSize(835, 860);
+        this.setSize(635, 660);
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         this.add(new Controller.DrawStuff(), BorderLayout.CENTER);
         this.setVisible(true);
+
+
+
+
+
     }
 
 

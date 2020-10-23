@@ -8,6 +8,10 @@ import java.awt.geom.Line2D;
 import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 import java.util.Random;
+import java.util.logging.Logger;
+
+import static java.lang.Math.sqrt;
+import static java.lang.Math.pow;
 
 public class Controller {
 
@@ -17,12 +21,12 @@ public class Controller {
     public static class DrawStuff extends JComponent {
 
         private int current[] = {0,0};
-        static int x = 0;
-        static int y = 0;
-        static int numberOfCells=10;
+        int x = 0;
+        int y = 0;
+        int numberOfCells=10;
         int cellSize=600/numberOfCells;
-        static boolean finished=false;
-        static Cell[][] cell = new Cell[numberOfCells][numberOfCells];
+        boolean finished=false;
+        Cell[][] cell = new Cell[numberOfCells][numberOfCells];
 
         void cellCreate(){
             for (int j=0; j < numberOfCells; j++) {
@@ -47,19 +51,30 @@ public class Controller {
 
             }
         }
-
         void drawOut(Graphics2D graph2D){
             for (int j=0; j < numberOfCells; j++) {
                 for (int i = 0; i < numberOfCells; i++) {
                     if (cell[i][j].walls[0] == 1) {
                         Shape drawLine0 = new Line2D.Float(10 + (i * cellSize), 10 + (j * cellSize), (10+cellSize) + (i * cellSize), 10 + (j * cellSize));
                         graph2D.draw(drawLine0);
-
+                    }
+                    else{
+                        graph2D.setColor(Color.lightGray);
+                        Shape drawLine0 = new Line2D.Float(10 + (i * cellSize), 10 + (j * cellSize), (10+cellSize) + (i * cellSize), 10 + (j * cellSize));
+                        graph2D.draw(drawLine0);
+                        graph2D.setColor(Color.black);
 
                     }
                     if (cell[i][j].walls[1] == 1) {
                         Shape drawLine0 = new Line2D.Float((10+cellSize) + (i * cellSize), 10 + (j * cellSize), (10+cellSize) + (i * cellSize), (10+cellSize) + (j * cellSize));
                         graph2D.draw(drawLine0);
+
+                    }
+                    else{
+                        graph2D.setColor(Color.lightGray);
+                        Shape drawLine0 = new Line2D.Float((10+cellSize) + (i * cellSize), 10 + (j * cellSize), (10+cellSize) + (i * cellSize), (10+cellSize) + (j * cellSize));
+                        graph2D.draw(drawLine0);
+                        graph2D.setColor(Color.black);
 
                     }
                     if (cell[i][j].walls[2] == 1) {
@@ -76,20 +91,7 @@ public class Controller {
                 }
             }
         }
-
-
-
-        public void paint(Graphics g) {
-            Graphics2D graph2D = (Graphics2D) g;
-
-            graph2D.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
-            Shape drawRect = new Rectangle2D.Float(10, 10, 600, 600);
-            graph2D.draw(drawRect);
-
-
-            cellCreate();
-
+        void operatorSelection(){
             int useThisOperator = -10;
             for (int q=0; q < numberOfCells; q++) {
                 for (int w = 0; w < numberOfCells; w++) {
@@ -103,6 +105,20 @@ public class Controller {
                     }
                 }
             }
+        }
+
+        public void paint(Graphics g) {
+            Graphics2D graph2D = (Graphics2D) g;
+
+            graph2D.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+            Shape drawRect = new Rectangle2D.Float(10, 10, 600, 600);
+            graph2D.draw(drawRect);
+
+
+            cellCreate();
+
+            operatorSelection();
             randomWallBreak(numberOfCells,cell);
 
 
@@ -111,7 +127,11 @@ public class Controller {
 
 
             //megoldás
-            solve();
+            solve(2);
+
+
+
+
 
 //            String s1= """
 //                    test
@@ -125,10 +145,21 @@ public class Controller {
 
         }
 
-        public static void solve() {
-            //RandomOperatorTry(cell);
-            //heuristicBackTrack(cell);
-            breadthSearch(cell);
+
+        public void solve(int solvingMethod) {
+            switch (solvingMethod){
+                case 1:
+                    RandomOperatorTry(cell);
+                    break;
+                case 2:
+                    heuristicBackTrack(cell);
+                    break;
+                case 3:
+                    breadthSearch(cell);
+                    break;
+            }
+
+
         }
 
         //falgeneráláshoz használt metódus: használható operátorok kigyűjtése
@@ -368,7 +399,6 @@ public class Controller {
 
 
                     if (cell[x][y].hasParent == true) {
-                        System.out.println("visszalépés");
 
                         int xhelp = cell[x][y].parent[0];
                         int yhelp = cell[x][y].parent[1];
@@ -436,7 +466,6 @@ public class Controller {
 
 
                     if (cell[x][y].hasParent == true) {
-                        System.out.println("visszalépés");
 
                         int xhelp = cell[x][y].parent[0];
                         int yhelp = cell[x][y].parent[1];
@@ -461,7 +490,7 @@ public class Controller {
                 }
                 System.out.println("lépés:"+counter);
                 counter++;
-                System.out.println("heurisztika: "+heuristica(x,y));
+                System.out.println("heurisztika: "+ manhattanDist(x,y));
                 if(x==numberOfCells-1 && y==numberOfCells-1)
                     finished=true;
             }
@@ -469,7 +498,7 @@ public class Controller {
 
         }
 
-        static int[] usable_operators(Cell cell[][]) {
+        int[] usable_operators(Cell cell[][]) {
 
 
             int[] usable = {1, 1, 1, 1};//up,right,down,left
@@ -578,9 +607,20 @@ public class Controller {
 
                 }
             }
+            Logger logger
+                    = Logger.getLogger(
+                    Controller.class.getName());
+
+
+            String noUsableOperatorMessage= """
+                    
+                    nincs használható operátor
+                    visszalépés
+                    """;
+//            logger.info(noUsableOperatorMessage);
 
             if (operator == 0) {                                    //ha nincs használható operátor,akkor visszalép
-                System.out.println("nincs használható operátor");
+                System.out.print(noUsableOperatorMessage);
                 return -1;
             } else if (operator == 1) {                                     //ha csak 1 operátor alkalmazható, azt alkalmazzuk
                 for (int i = 0; i < numberOfCells - 1; i++) {
@@ -596,15 +636,24 @@ public class Controller {
 
                 //jobra vagy le fog menni a jobb alsó sarokban lévő cél miatt
                 if (cell[x][y].usableOperators[1] == 1 && cell[x][y].usableOperators[2] == 1) {
-                    if(heuristica(x+1,y)<heuristica(x,y+1)){
+                    if(manhattanDist(x+1,y)< manhattanDist(x,y+1)){
                         return 1;
                     }
-                    else if(heuristica(x+1,y)>heuristica(x,y+1)){
+                    else if(manhattanDist(x+1,y)> manhattanDist(x,y+1)){
                         return 2;
                     }
                     else{
-                    int randInt = rand.nextInt(2) + 1;
-                    return randInt;
+                        //itt a 2 cella ahova lépne egyenlő manhattan távolságra van a céltól
+                        if(eucDist(x+1,y)< eucDist(x,y+1)){
+                            return 1;
+                        }
+                        else if(eucDist(x+1,y)> eucDist(x,y+1)){
+                            return 2;
+                        }
+                        else{
+                            int randInt = rand.nextInt(2) + 1;
+                            return randInt;
+                        }
                     }
                 } else if (cell[x][y].usableOperators[1] == 1) {
                     return 1;
@@ -624,7 +673,7 @@ public class Controller {
             return 1;
         }
 
-        public static void breadthSearch(Cell[][] cell){
+        public void breadthSearch(Cell[][] cell){
 
             System.out.println("\n\n\n\n\n\n\n\n\nNow start the game!");
             x=0;
@@ -916,8 +965,14 @@ public class Controller {
             }
         }
 
-        int heuristica(int x, int y){
+        int manhattanDist(int x, int y){
             return ( (numberOfCells-1) + (numberOfCells-1) ) - ( x + y);
+        }
+
+        double eucDist(int x,int y){
+            //gyök alatt(  (x2-x1)^2 + (y2-y1)^2    )
+
+            return sqrt( pow((numberOfCells-1-x),2 ) + pow((numberOfCells-1-x),2));
         }
     }
 }
